@@ -1,9 +1,9 @@
 import axios from "axios";
 
-export async function api() {
+export async function api(departamentoId) {
     const options = {
         method: 'GET',
-        url: ' http://localhost:8000/api/notificaciones/{departamentoId}',
+        url: `http://localhost:8000/api/notificaciones/${departamentoId}`,
         headers: {
             'Content-Type': 'application/json'
         }
