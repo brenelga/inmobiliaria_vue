@@ -1,7 +1,7 @@
 <script setup>
 import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import NotificationButton from '@/components/';
+import NotificationButton from '@/components/NotificationButton.vue';
 
 const route = useRoute();
 const showNotificationButton = ref(false);
