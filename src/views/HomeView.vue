@@ -1,6 +1,6 @@
 <script setup>
 import { useRouter } from 'vue-router';
-import { useNotificationStore } from '../stores/notificaciones'
+import { useNotificationStore } from '../stores/notification'
 
 const router = useRouter();
 const store = useNotificationStore();

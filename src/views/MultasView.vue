@@ -1,67 +1,69 @@
 <script setup>
 import { onMounted, ref, onUnmounted } from 'vue';
 import { api } from '../utils/index.js';
+import { useNotificationStore } from '../stores/notification';
 
 const Multas_Totales = ref([]);
 const multasAnteriores = ref([]);
 const nuevasMultas = ref([]);
-const notificacion = ref([]);
+const mostrarNotificacion = ref(false);
+
+const markAsRead = async (notificationIds) => {
+};
 
 async function respuestas() {
   const respuestaRaw = await api("001");
+  
+  const respuesta = respuestaRaw.map(multa => ({
+    id: multa._id.$oid || multa._id.toString(),
+    departamento_id: multa.departamento_id,
+    monto: multa.monto,
+    mensaje: multa.mensaje,
+    fecha: multa.fecha,
+    status: multa.status,
+  }));
 
-    const respuesta = respuestaRaw.map(multa => ({
-        id: multa._id.$oid || multa._id.toString(),
-        departamento_id: multa.departamento_id,
-        monto: multa.monto,
-        mensaje: multa.mensaje,
-        fecha: multa.fecha,
-        status: multa.status,
-    }));
-
-  console.log("Respuesta:", respuesta);
-
-  if (!Array.isArray(respuesta)) {
-    console.warn("La respuesta no es un Array: ", respuesta);
-    return;
-  }
+  if (!Array.isArray(respuesta)) return;
 
   if (!Array.isArray(multasAnteriores.value)) {
     multasAnteriores.value = [];
   }
-
-  console.log("Multas anteriores:", multasAnteriores.value);
 
   const anterioresIds = multasAnteriores.value.map(m => m.id);
   const nuevasDetectadas = respuesta.filter(m => !anterioresIds.includes(m.id));
 
   if (nuevasDetectadas.length > 0) {
     nuevasMultas.value = nuevasDetectadas;
-    notificacion.value = true;
+    mostrarNotificacion.value = true;
 
     setTimeout(() => {
-        notificacion.value = false;
-    }, 5000)
-} else {
+      mostrarNotificacion.value = false;
+    }, 5000);
+  } else {
     nuevasMultas.value = [];
   }
+  
   Multas_Totales.value = [...respuesta];
+  
+  if (nuevasMultas.value.length > 0) {
+    await markAsRead(nuevasMultas.value.map(n => n.id));
+  }
 }
 
 let intervalId;
 
 onMounted(() => {
   respuestas();
-  IntervalId = setInterval(respuestas, 5000);
+  intervalId = setInterval(respuestas, 5000);
 });
 
 onUnmounted(() => {
-  clearInterval(IntervalId);
+  clearInterval(intervalId);
 });
 </script>
+
 <template>
   <div class="p-6 min-h-screen bg-gray-100">
-    <!-- Notificación de nuevas multas -->
     <div 
       v-if="mostrarNotificacion"
       class="fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-lg max-w-xs z-50"
@@ -72,7 +74,6 @@ onUnmounted(() => {
     </div>
 
     <div class="max-w-4xl mx-auto space-y-6">
-      <!-- Sección de notificaciones -->
       <div class="bg-white rounded-xl shadow p-4">
         <h2 class="text-xl font-bold mb-4">🔔 Notificaciones de Nuevas Multas</h2>
         <div v-if="nuevasMultas.length > 0">
