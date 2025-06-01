@@ -1,5 +1,15 @@
 <script setup>
 import { RouterLink, RouterView } from 'vue-router'
+import { useNotificationStore } from './stores/notificaciones.js';
+import { onMounted } from 'vue';
+
+const store = useNotificationStore();
+
+onMounted(() => {
+  setInterval(() => {
+    store.establecerNuevasMultas([]); // o mejor aún: mover la lógica al store
+  }, 5000);
+});
 </script>
 
 <template>
