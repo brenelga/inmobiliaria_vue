@@ -7,12 +7,27 @@ const Multas_Totales = ref([]);
 const multasAnteriores = ref([]);
 const nuevasMultas = ref([]);
 const mostrarNotificacion = ref(false);
+const NotificationStore = useNotificationStore();
 
-const markAsRead = async (notificationIds) => {
+const markAsRead = async () => {
+  try {
+    await axios.post('http://localhost:8000/api/mark_as_read', {
+      departamento_id: "001"
+    });
+    NotificationStore.setNewNotifications(0);
+  } catch (error) {
+    console.error('Error al marcar como leídas:', error);
+  }
 };
+
 
 async function respuestas() {
   const respuestaRaw = await api("001");
+  
+  if (!respuestaRaw || !Array.isArray(respuestaRaw)) {
+    console.warn("Respuesta inválida o no es un array:", respuestaRaw);
+    return;
+  }
   
   const respuesta = respuestaRaw.map(multa => ({
     id: multa._id.$oid || multa._id.toString(),
@@ -23,31 +38,27 @@ async function respuestas() {
     status: multa.status,
   }));
 
-  if (!Array.isArray(respuesta)) return;
+  console.log("Datos recibidos:", respuesta);
 
-  if (!Array.isArray(multasAnteriores.value)) {
-    multasAnteriores.value = [];
-  }
+  const idsAnteriores = new Set(multasAnteriores.value.map(m => m.id));
+  const nuevasDetectadas = respuesta.filter(m => !idsAnteriores.has(m.id));
 
-  const anterioresIds = multasAnteriores.value.map(m => m.id);
-  const nuevasDetectadas = respuesta.filter(m => !anterioresIds.includes(m.id));
+  console.log("Nuevas multas detectadas:", nuevasDetectadas);
 
   if (nuevasDetectadas.length > 0) {
     nuevasMultas.value = nuevasDetectadas;
     mostrarNotificacion.value = true;
+    
+    NotificationStore.setNewNotifications(nuevasDetectadas.length);
+    
+    multasAnteriores.value = respuesta;
 
     setTimeout(() => {
       mostrarNotificacion.value = false;
     }, 5000);
-  } else {
-    nuevasMultas.value = [];
   }
-  
-  Multas_Totales.value = [...respuesta];
-  
-  if (nuevasMultas.value.length > 0) {
-    await markAsRead(nuevasMultas.value.map(n => n.id));
-  }
+
+  Multas_Totales.value = respuesta;
 }
 
 let intervalId;

@@ -21,6 +21,11 @@ const router = createRouter({
       path: '/multas',
       name: 'multas',
       component: () => import('@/views/MultasView.vue')
+    },
+    {
+      path: '/panel',
+      name: 'panel',
+      component: () => import('@/views/PanelView.vue')
     }
   ],
 })

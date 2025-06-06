@@ -1,59 +1,63 @@
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { useNotificationStore } from '../stores/notification';
+import axios from 'axios';
 import { api } from '../utils/index.js';
 
-const props = defineProps({
-  departamentoId: {
-    type: String,
-    required: true
-  }
-});
+const props = defineProps({ departamentoId: String });
 
-const router = useRouter();
+const notificationStore = useNotificationStore();
 const hasNewNotifications = ref(false);
 const notificationCount = ref(0);
+const router = useRouter();
+
 let intervalId;
-let checkInterval = 10000;
 
 const checkNotifications = async () => {
   try {
     const respuestaRaw = await api(props.departamentoId);
-    const respuesta = respuestaRaw.map(multa => ({
-      id: multa._id.$oid || multa._id.toString(),
-      departamento_id: multa.departamento_id,
-      monto: multa.monto,
-      mensaje: multa.mensaje,
-      fecha: multa.fecha,
-      status: multa.status,
+    const multasArray = Array.isArray(respuestaRaw.data) ? respuestaRaw.data : [];
+
+    const respuesta = multasArray.map(multa => ({
+      id: multa._id?.$oid || multa._id?.toString() || multa.id || '',
+      read: multa.read,
     }));
 
-    const nuevas = respuesta.filter(notif => notif.status === 'unread');
-    
-    if (nuevas.length > 0) {
-      hasNewNotifications.value = true;
-      notificationCount.value = nuevas.length;
-    } else {
-      hasNewNotifications.value = false;
-      notificationCount.value = 0;
-    }
+    const nuevas = respuesta.filter(notif => notif.read === 'unread');
+    notificationStore.setNewNotifications(nuevas.length);
+    notificationStore.setUnreadIds(nuevas.map(n => n.id));
+
+    hasNewNotifications.value = notificationStore.hasNewNotifications;
+    notificationCount.value = notificationStore.notificationCount;
   } catch (error) {
     console.error('Error al verificar notificaciones:', error);
   }
 };
 
+const goToNotifications = async () => {
+  const unreadIds = notificationStore.unreadNotificationIds;
+  if (unreadIds.length > 0) {
+    try {
+      await axios.post('http://localhost:8000/api/mark_as_read', {
+    departamento_id: props.departamentoId      
+  });
+      notificationStore.setNewNotifications(0);
+    } catch (err) {
+      console.error('Error marcando como leídas:', err);
+    }
+  }
+  router.push({path: '/multas'})
+};
+
 onMounted(() => {
   checkNotifications();
-  intervalId = setInterval(checkNotifications, checkInterval);
+  intervalId = setInterval(checkNotifications, 10000);
 });
 
 onUnmounted(() => {
   clearInterval(intervalId);
 });
-
-const goToNotifications = () => {
-  router.push('/notificaciones');
-};
 </script>
 
 <template>

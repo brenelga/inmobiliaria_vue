@@ -13,6 +13,6 @@ export async function api(departamentoId) {
         return respuesta.data;
     } catch(error){
         console.error('Error al conectarse a la API', error);
-        return [];
+        return { success: false, data: []};
     }
 }

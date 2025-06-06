@@ -1,14 +1,43 @@
 <script setup>
 import { useRouter } from 'vue-router';
 import { useNotificationStore } from '../stores/notification'
+import { defineStore } from 'pinia';
+import { onMounted, onUnmounted } from 'vue';
+import { api } from '@/utils/index';
 
 const router = useRouter();
 const store = useNotificationStore();
+const departamentoId = '001';
+
+let intervalo = null;
 
 function irAMultas() {
   store.limpiarNotificaciones();
   router.push('/multas');
+};
+
+async function verificarNotificaciones() {
+  try {
+    const respuesta = await api(departamentoId);
+    const notificaciones = Array.isArray(respuesta.data) ? respuesta.data : [];
+
+    const unread = notificaciones.filter(n => n.read === 'unread');
+    store.setNewNotifications(unread.length);
+    store.setUnreadIds(unread.map(n => n._id));
+  } catch (error) {
+    console.error('Error al verificar notificaciones:', error);
+  }
 }
+
+onMounted(() => {
+  verificarNotificaciones();
+  intervalo = setInterval(verificarNotificaciones, 5000);
+});
+
+onUnmounted(() => {
+  if (intervalo) clearInterval(intervalo);
+})
+
 </script>
 
 <template>
