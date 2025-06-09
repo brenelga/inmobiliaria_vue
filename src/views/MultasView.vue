@@ -65,6 +65,7 @@ let intervalId;
 
 onMounted(() => {
   respuestas();
+  markAsRead();
   intervalId = setInterval(respuestas, 5000);
 });
 

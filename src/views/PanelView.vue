@@ -28,15 +28,20 @@
                 <button @click="mostrarFormulario = !mostrarFormulario" class="btn">
                     {{ mostrarFormulario ? 'Ocultar' : 'Mostrar' }} formulario
                 </button>
-
                 <Transition name="fade">
-                    <form v-if="mostrarFormulario" class="formulario">
+                    <div v-if="mostrarNotificacion":class="['notificacion', tipoNotificacion === 'success' ? 'notificacion-exito' : 'notificacion-error']">
+                        {{ mensajeNotificación }}
+                    </div>
+                </Transition>
+                <Transition name="fade">
+                    <form v-if="mostrarFormulario" class="formulario" @submit.prevent="enviarMulta">
                         <label>Id del Departamento: </label>
-                        <input type="text">
+                        <input type="text" v-model="departamentoId">
                         <label>Monto: </label>
-                        <input type="number">
+                        <input type="number" v-model="monto">
                         <label>Mensaje: </label>
-                        <input type="text">
+                        <input type="text" v-model="mensaje">
+                        <button type="submit" class="btn">Enviar</button>
                     </form>
                 </Transition>
             </main>
@@ -46,6 +51,7 @@
 
 <script setup>
     import { ref } from 'vue';
+    import axios from 'axios';
     import { useNotificationStore } from '@/stores/notification';
     import { useRouter } from 'vue-router';
     import { defineStore } from 'pinia';
@@ -53,6 +59,39 @@
     const router = useRouter();
     const store = useNotificationStore();
     const mostrarFormulario = ref(false);
+    const departamentoId = ref('');
+    const monto = ref('');
+    const mensaje = ref('');
+    const mensajeNotificación = ref('');
+    const tipoNotificacion = ref('');
+    const mostrarNotificacion = ref('');
+
+    const enviarMulta = async() => {
+        try {
+            const response = await axios.post('http://localhost:8000/api/multas', {
+                departamento_id: departamentoId.value,
+                monto: monto.value,
+                mensaje: mensaje.value
+            });
+            
+            mensajeNotificación.value = 'Multa enviada correctamente';
+            tipoNotificacion = 'success';
+            mostrarNotificacion.value = true;
+
+            departamentoId.value = '';
+            monto.value = '';
+            mensaje.value = '';
+        } catch (error) {
+            console.error(error);
+            mensajeNotificación = 'Error al enviar la multa';
+            tipoNotificacion.value = 'error';
+            mostrarNotificacion.value = true;
+        }
+
+        setTimeout(() => {
+            mostrarNotificacion.value = false;
+        }, 3000);
+    };
 
     function irAMultas() {
   store.limpiarNotificaciones();
@@ -112,5 +151,23 @@
     }
     .fade-enter-from, .fade-leave-to {
         opacity: 0;
+    }
+    .notificacion {
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        font-weight: bold;
+        text-align: center;
+        max-width: 400px;
+    }
+
+    .notificacion-exito{
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+
+    .notificacion-error{
+        background-color: #fee2e2;
+        color: #991b1b;
     }
 </style>
