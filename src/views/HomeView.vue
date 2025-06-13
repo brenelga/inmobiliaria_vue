@@ -11,10 +11,11 @@ const departamentoId = '001';
 
 let intervalo = null;
 
-function irAMultas() {
+async function irAMultas() {
+  await store.marcarNotificacionesLeidas(departamentoId);
   store.limpiarNotificaciones();
   router.push('/multas');
-};
+}
 
 async function verificarNotificaciones() {
   try {

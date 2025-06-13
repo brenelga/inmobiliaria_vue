@@ -16,15 +16,10 @@ let intervalId;
 
 const checkNotifications = async () => {
   try {
-    const respuestaRaw = await api(props.departamentoId);
-    const multasArray = Array.isArray(respuestaRaw.data) ? respuestaRaw.data : [];
+    const respuesta = await api(props.departamentoId);
+    const multasArray = Array.isArray(respuesta) ? respuesta : [];
 
-    const respuesta = multasArray.map(multa => ({
-      id: multa._id?.$oid || multa._id?.toString() || multa.id || '',
-      read: multa.read,
-    }));
-
-    const nuevas = respuesta.filter(notif => notif.read === 'unread');
+    const nuevas = multasArray.filter(notif => notif.read === 'unread');
     notificationStore.setNewNotifications(nuevas.length);
     notificationStore.setUnreadIds(nuevas.map(n => n.id));
 

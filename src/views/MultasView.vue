@@ -22,44 +22,49 @@ const markAsRead = async () => {
 
 
 async function respuestas() {
-  const respuestaRaw = await api("001");
-  
-  if (!respuestaRaw || !Array.isArray(respuestaRaw)) {
-    console.warn("Respuesta inválida o no es un array:", respuestaRaw);
-    return;
-  }
-  
-  const respuesta = respuestaRaw.map(multa => ({
-    id: multa._id.$oid || multa._id.toString(),
-    departamento_id: multa.departamento_id,
-    monto: multa.monto,
-    mensaje: multa.mensaje,
-    fecha: multa.fecha,
-    status: multa.status,
-  }));
+  try{
+    const respuesta = await api("001");
+    
+    if (!Array.isArray(respuesta)) {
+      console.warn("La respuesta no es un array:", respuesta);
+      return;
+    }
+    
+    const datosProcesados = respuesta.map(multa => ({
+      id: multa._id?.$oid || multa._id?.toString() || '',
+      departamento_id: multa.departamento_id,
+      monto: multa.monto,
+      mensaje: multa.mensaje,
+      fecha: multa.fecha,
+      status: multa.status,
+      read: multa.read,
+      tipo: multa.tipo || 'General'
+    }));
 
   console.log("Datos recibidos:", respuesta);
 
   const idsAnteriores = new Set(multasAnteriores.value.map(m => m.id));
-  const nuevasDetectadas = respuesta.filter(m => !idsAnteriores.has(m.id));
+    const nuevasDetectadas = datosProcesados.filter(m => !idsAnteriores.has(m.id));
 
-  console.log("Nuevas multas detectadas:", nuevasDetectadas);
+    if (nuevasDetectadas.length > 0) {
+      nuevasMultas.value = nuevasDetectadas;
+      mostrarNotificacion.value = true;
+      NotificationStore.setNewNotifications(nuevasDetectadas.length);
+    }
 
-  if (nuevasDetectadas.length > 0) {
-    nuevasMultas.value = nuevasDetectadas;
-    mostrarNotificacion.value = true;
-    
-    NotificationStore.setNewNotifications(nuevasDetectadas.length);
-    
-    multasAnteriores.value = respuesta;
+    multasAnteriores.value = datosProcesados;
+    Multas_Totales.value = datosProcesados;
 
     setTimeout(() => {
       mostrarNotificacion.value = false;
     }, 5000);
   }
-
-  Multas_Totales.value = respuesta;
-}
+  catch (error) {
+    console.error("Error al obtener multas: ", error);
+    Multas_Totales = [];
+  }
+  }
+  
 
 let intervalId;
 

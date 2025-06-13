@@ -5,14 +5,23 @@ export async function api(departamentoId) {
         method: 'GET',
         url: `http://localhost:8000/api/notificaciones/${departamentoId}`,
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
         }
     }
-    try{
-        const respuesta=await axios.request(options);
-        return respuesta.data;
-    } catch(error){
+    try {
+        const respuesta = await axios.request(options);
+        
+        if (respuesta.data && typeof respuesta.data.success !== 'undefined') {
+            return respuesta.data.data;
+        }
+        
+        return respuesta.data || [];
+    } catch (error) {
         console.error('Error al conectarse a la API', error);
-        return { success: false, data: []};
+        if (error.response) {
+            console.error("Detalles del error:", error.response.data);
+        }
+        return [];
     }
 }
