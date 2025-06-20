@@ -2,6 +2,8 @@
 import { onMounted, ref, onUnmounted } from 'vue';
 import { api } from '../utils/index.js';
 import { useNotificationStore } from '../stores/notification';
+import { useAuthStore } from '@/stores/auth';
+const auth = useAuthStore();
 
 const Multas_Totales = ref([]);
 const multasAnteriores = ref([]);
@@ -77,6 +79,12 @@ onMounted(() => {
 onUnmounted(() => {
   clearInterval(intervalId);
 });
+
+function logout() {
+  auth.logout();
+  router.push({ name: 'login' });
+}
+
 </script>
 
 <template>
@@ -88,6 +96,14 @@ onUnmounted(() => {
     >
       <p class="font-bold">Nuevas multas detectadas</p>
       <p>Tienes {{ nuevasMultas.length }} nueva(s) multa(s)</p>
+
+      <button
+  @click="logout"
+  class="ml-4 px-4 py-2 rounded-full font-bold bg-gray-200 text-black hover:bg-gray-300 transition"
+>
+  🚪 Cerrar sesión
+</button>
+
     </div>
 
     <div class="max-w-4xl mx-auto space-y-6">

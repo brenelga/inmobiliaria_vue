@@ -12,6 +12,13 @@
       🔔 Notificaciones
       <span v-if="store.hayNotificaciones" class="ml-1">(¡Nuevas!)</span>
     </button>
+    <button
+  @click="logout"
+  class="ml-4 px-4 py-2 rounded-full font-bold bg-gray-200 text-black hover:bg-gray-300 transition"
+>
+  🚪 Cerrar sesión
+</button>
+
         </header>
         <div class="contenido">
             <aside class="sidebar">
@@ -80,6 +87,7 @@
     import { useNotificationStore } from '@/stores/notification';
     import { useRouter } from 'vue-router';
     import { defineStore } from 'pinia';
+    import { useAuthStore } from '@/stores/auth'
 
     const router = useRouter();
     const store = useNotificationStore();
@@ -94,6 +102,7 @@
     const showResultModal = ref(false);
     const modalMessage = ref('');
     const modalType = ref('');
+    const auth = useAuthStore();
 
     const enviarMulta = async() => {
         isLoading.value = true;
@@ -139,6 +148,11 @@
     function closeModal() {
         showResultModal.value = false;
     }
+
+function logout() {
+  auth.logout();
+  router.push({ name: 'login' });
+}
 
 </script>
 
